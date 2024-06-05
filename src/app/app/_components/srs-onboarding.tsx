@@ -57,7 +57,10 @@ function OnboardPage2() {
         </li>
         <li className="mt-2 text-muted-foreground">
           All progress you have is stored in your browser, if you delete your
-          browser data, <span className="text-foreground/90">you will lose all your progress.</span>
+          browser data,{" "}
+          <span className="text-foreground/90">
+            you will lose all your progress.
+          </span>
         </li>
         <li className="mt-2 text-muted-foreground">
           You won't be able to sync your progress on other devices. If you want
@@ -216,7 +219,7 @@ export default function SRSOnboarding({
   onOnboardingFinished: () => void;
 }) {
   return (
-    <div className="mx-auto max-w-screen-sm relative shadow-xl grid place-items-center h-full px-6 sm:px-12 bg-gradient-to-tr rounded-2xl from-background via-popover to-background">
+    <div className="mx-auto max-w-screen-sm relative shadow-xl grid place-items-center h-full px-6 sm:px-12 g-gradient-to-tr rounded-2xl from-background via-popover to-background">
       <Link href="/" className="absolute top-4 left-4">
         <Button variant="ghost" size="sm" className="text-muted-foreground">
           <RiArrowLeftLine className="size-4 mr-2 mt-0.5" />

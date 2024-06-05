@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import SRSLoadAlertDialog from "./_components/srs-load-alert-dialog";
+import { ThemeProvider } from "next-themes";
+import { themes } from "@/lib/themes";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,11 +19,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="polar h-full">
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <body className={cn(inter.className, "h-full")}>
-        {children}
-
-        <SRSLoadAlertDialog />
+        <ThemeProvider
+          themes={themes.map((theme) => theme.name)}
+          attribute="class"
+          defaultTheme={themes[0].name}
+          disableTransitionOnChange
+        >
+          {children}
+          <SRSLoadAlertDialog />
+        </ThemeProvider>
       </body>
     </html>
   );

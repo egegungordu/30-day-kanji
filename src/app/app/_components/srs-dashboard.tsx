@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import Loader from "@/components/ui/loader";
 import { useSRS, Rating, Grade } from "@/lib/srs";
 import { relativeTime } from "@/lib/utils";
+import Link from "next/link";
 import { useLayoutEffect, useReducer } from "react";
+import { RiArrowLeftLine } from "react-icons/ri";
 
 function ReviewScreen({ onFinishReview }: { onFinishReview?: () => void }) {
   const { schedule, getCurrentCard, rateCurrentCardAndAdvance, loadState } =
@@ -127,7 +129,13 @@ export default function SRSDasbhoard() {
   }
 
   return (
-    <div className="flex mx-auto max-w-screen-md bg-card h-full p-4 rounded-xl shadow-xl">
+    <div className="mx-auto max-w-screen-md bg-card h-fit min-h-full p-4 rounded-xl shadow-xl">
+      <Link href="/" className="top-4 left-4">
+        <Button variant="ghost" size="sm" className="text-muted-foreground">
+          <RiArrowLeftLine className="size-4 mr-2 mt-0.5" />
+          Back
+        </Button>
+      </Link>
       {isReviewing ? (
         <ReviewScreen onFinishReview={switchIsReviewing} />
       ) : (
