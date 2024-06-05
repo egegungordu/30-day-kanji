@@ -3,33 +3,32 @@ import { devtools, persist, createJSONStorage } from "zustand/middleware";
 
 import {
   createEmptyCard,
-  formatDate,
   fsrs,
   generatorParameters,
   Grades as FSRSGrades,
   Grade as FSRSGrade,
   Rating as FSRSRating,
   Card as FSRSCard,
-  CardInput,
   State as FSRSState,
 } from "ts-fsrs";
-import { useEffect, useLayoutEffect } from "react";
 import { z, ZodError } from "zod";
 
 const params = generatorParameters({
   enable_fuzz: true,
   maximum_interval: 1000,
-  request_retention: 0.9,
+  request_retention: 0.93,
 });
 
 const f = fsrs(params);
 
-export interface Card extends FSRSCard {
+interface CardFace {
   id: string;
-  front: string;
-  back: string;
+  kanji: string;
+  reading: string;
+  targetKanji: string;
+  sentence: string;
 }
-
+export type Card = FSRSCard & CardFace;
 export type Grade = FSRSGrade;
 export const Grades = FSRSGrades;
 export const Rating = FSRSRating;
@@ -46,15 +45,15 @@ interface SRSState {
   cards: Map<string, Card>;
   currentCardId?: string;
   newCardsPerDay: number;
+  nextDayReset: Date;
+  newAddedCount: number;
   schedule: {
-    newAddedCount: number;
     new: string[];
     learning: string[];
     review: string[];
   };
-  next: () => void;
-  rateCurrentCard: (rate: Grade) => void;
-  hydrateCards: (cards: Pick<Card, "id" | "front" | "back">[]) => void;
+  rateCurrentCardAndAdvance: (rate: Grade) => string | undefined;
+  hydrateCards: (cards: CardFace[]) => void;
   reschedule: () => void;
 }
 
@@ -73,11 +72,11 @@ const StoreCardSchema = z.array(
   }),
 );
 const StoreScheduleSchema = z.object({
-  newAddedCount: z.number().min(0),
   new: z.array(z.string()),
   learning: z.array(z.string()),
   review: z.array(z.string()),
 });
+const StoreDateSchema = z.coerce.date();
 
 const STORE_NAME = "srsStore";
 
@@ -90,13 +89,17 @@ const srsStorage = createJSONStorage(() => localStorage, {
       cardsArray.forEach((card) => {
         cardsMap.set(card.id, {
           ...card,
-          front: "",
-          back: "",
+          kanji: "",
+          reading: "",
+          targetKanji: "",
+          sentence: "",
         });
       });
       return cardsMap;
     } else if (key === "schedule") {
       return StoreScheduleSchema.parse(value);
+    } else if (key === "nextDayReset") {
+      return StoreDateSchema.parse(value);
     }
     return value;
   },
@@ -107,8 +110,10 @@ const srsStorage = createJSONStorage(() => localStorage, {
       const a = Array.from((value as Map<string, Card>).values()).map(
         (card: Card) => ({
           ...card,
-          front: undefined,
-          back: undefined,
+          kanji: undefined,
+          reading: undefined,
+          targetKanji: undefined,
+          sentence: undefined,
         }),
       );
       return a;
@@ -129,36 +134,18 @@ const useSRSStore = create<SRSState>()(
         cards: new Map<string, Card>(),
         currentCardId: "",
         newCardsPerDay: 5,
+        nextDayReset: new Date(),
+        newAddedCount: 0,
         schedule: {
-          newAddedCount: 0,
           new: [],
           learning: [], // also relearning
           review: [],
         },
-        next: () => {
-          // first new, then learning, then review
-          const queue = get()
-            .schedule.new.concat(get().schedule.learning)
-            .concat(get().schedule.review);
-          const nextCardId = queue[0];
-          const schedule = get().schedule;
-          const newSchedule =
-            get().cards.get(nextCardId)?.state === State.New
-              ? {
-                  ...schedule,
-                  newAddedCount: schedule.newAddedCount + 1,
-                }
-              : schedule;
-          set({
-            currentCardId: nextCardId,
-            schedule: newSchedule,
-          });
-          get().reschedule();
-        },
-        rateCurrentCard: (rate: Grade) => {
+        rateCurrentCardAndAdvance: (rate: Grade) => {
           const card = get().cards.get(get().currentCardId ?? "");
           if (card) {
             const recordLog = f.repeat(card, Date.now());
+            const oldCardState = card.state;
             const newCardValues = recordLog[rate].card;
             card.due = newCardValues.due;
             card.stability = newCardValues.stability;
@@ -169,18 +156,34 @@ const useSRSStore = create<SRSState>()(
             card.lapses = newCardValues.lapses;
             card.state = newCardValues.state;
             card.last_review = newCardValues.last_review;
-            set({ cards: get().cards });
+            set({
+              cards: get().cards,
+              newAddedCount:
+                oldCardState === State.New
+                  ? get().newAddedCount + 1
+                  : get().newAddedCount,
+            });
             get().reschedule();
+            const queue = get()
+              .schedule.new.concat(get().schedule.learning)
+              .concat(get().schedule.review);
+            const nextCardId = queue[0];
+            set({
+              currentCardId: nextCardId,
+            });
+            return nextCardId;
           }
         },
-        hydrateCards: (cards: Pick<Card, "id" | "front" | "back">[]) => {
+        hydrateCards: (cards: CardFace[]) => {
           const newCards = cards.map((card) => {
             const existingCard = get().cards.get(card.id);
             if (existingCard) {
               return {
                 ...existingCard,
-                front: card.front,
-                back: card.back,
+                kkanji: card.kanji,
+                reading: card.reading,
+                targetKanji: card.targetKanji,
+                sentence: card.sentence,
               };
             } else {
               return {
@@ -193,24 +196,39 @@ const useSRSStore = create<SRSState>()(
         },
         reschedule: () => {
           const now = new Date();
+          if (now > get().nextDayReset) {
+            const nextDayReset = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate() + 1,
+              4,
+              0,
+              0,
+              0,
+            );
+            set({
+              nextDayReset: nextDayReset,
+              newAddedCount: 0,
+            });
+          }
           const currentCards = Array.from(get().cards.values());
-          const newCardCount =
-            get().newCardsPerDay - get().schedule.newAddedCount;
+          const newCardCount = get().newCardsPerDay - get().newAddedCount;
           const newCardIds = currentCards
             .filter((c) => c.state === State.New)
             .map((c) => c.id)
             .slice(0, newCardCount);
-          const learningCardIds = currentCards
+          let learningCardIds = currentCards
             .filter(
               (c) => c.state === State.Learning || c.state === State.Relearning,
             )
+            .sort((a, b) => a.due.getTime() - b.due.getTime())
             .map((c) => c.id);
           const reviewCardIds = currentCards
             .filter((c) => c.state === State.Review && c.due < now)
+            .sort((a, b) => a.due.getTime() - b.due.getTime())
             .map((c) => c.id);
           set({
             schedule: {
-              newAddedCount: get().schedule.newAddedCount,
               new: newCardIds,
               learning: learningCardIds,
               review: reviewCardIds,
@@ -226,6 +244,8 @@ const useSRSStore = create<SRSState>()(
         partialize: (state) => ({
           cards: state.cards,
           schedule: state.schedule,
+          nextDayReset: state.nextDayReset,
+          newAddedCount: state.newAddedCount,
         }),
         onRehydrateStorage: () => {
           return (_, error) => {
@@ -271,35 +291,43 @@ const useSRSStore = create<SRSState>()(
 
 async function getKanjiCards() {
   console.warn("CALLING BACKEND");
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  return Array.from({ length: 100 }, (_, i) => ({
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  return Array.from({ length: 2200 }, (_, i) => ({
     id: i.toString(),
-    front: "asd" + Math.sin(i).toString(36).substring(2, 15),
-    back: "asd" + Math.sin(i).toString(36).substring(2, 15),
+    reading: "けいこう",
+    kanji: "傾向",
+    targetKanji: "向",
+    sentence: "若者にはお金を無駄に使う傾向がある。",
   }));
 }
 
 export function useSRS() {
-  const { cards, schedule, rateCurrentCard, next, currentCardId } =
+  const { cards, schedule, rateCurrentCardAndAdvance, currentCardId } =
     useSRSStore();
   const { loadState, error } = useSRSMetaStore();
-
-  /* useLayoutEffect(() => { */
-  /*   (useSRSStore.persist.rehydrate() as Promise<void>).then(); */
-  /* }, []); */
 
   return {
     loadState,
     error,
     cards,
-    getCurrentCard: () => cards.get(currentCardId ?? ""),
+    getCurrentCard: () => {
+      const currentCard = cards.get(currentCardId ?? "");
+      if (!currentCard) {
+        return undefined;
+      }
+      const repeats = f.repeat(currentCard, Date.now());
+      return {
+        ...currentCard,
+        goodDue: repeats[Rating.Good].card.due,
+        againDue: repeats[Rating.Again].card.due,
+      };
+    },
     hydrateCards: (onHydrateFinished: () => void) =>
       (useSRSStore.persist.rehydrate() as Promise<void>).then(
         onHydrateFinished,
       ),
-    rateCurrentCard,
+    rateCurrentCardAndAdvance,
     schedule,
-    next,
     reset: () => {
       useSRSMetaStore.setState({ loadState: "loading", error: undefined });
       useSRSStore.persist.clearStorage();
