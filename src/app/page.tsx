@@ -17,7 +17,7 @@ export default function Home() {
       </div>
 
       <Link href="/app" className="mt-4">
-        <Button variant="secondary">
+        <Button>
           Start the challenge
         </Button>
       </Link>

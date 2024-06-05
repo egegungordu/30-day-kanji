@@ -19,7 +19,7 @@ function OnboardPage1() {
         </span>{" "}
         challenge!
       </h1>
-      <p className="bg-accent/40 text-secondary-foreground/80 px-5 py-3 rounded-xl text-sm mt-6">
+      <p className="bg-accent/50 text-accent-foreground/80 px-5 py-3 rounded-xl text-sm mt-6">
         <RiErrorWarningLine className="mr-2 inline-block" />
         <span className="font-bold">IMPORTANT:</span> Intended for people who
         already can read japanese, but struggle with writing.
@@ -137,6 +137,10 @@ function OnboardingSteps({
   const { currentStep, next, previous, registeredChildren } =
     useOnboardingStepsStore();
 
+  useLayoutEffect(() => {
+    useOnboardingStepsStore.setState(useOnboardingStepsStore.getInitialState());
+  }, []);
+
   return (
     <div className="flex flex-col justify-between sm:justify-center h-full">
       <div className="mt-24">{children}</div>
@@ -212,7 +216,7 @@ export default function SRSOnboarding({
   onOnboardingFinished: () => void;
 }) {
   return (
-    <div className="mx-auto max-w-screen-sm relative shadow-xl grid place-items-center h-full px-6 sm:px-12 bg-gradient-to-tr rounded-2xl from-background via-card to-background">
+    <div className="mx-auto max-w-screen-sm relative shadow-xl grid place-items-center h-full px-6 sm:px-12 bg-gradient-to-tr rounded-2xl from-background via-popover to-background">
       <Link href="/" className="absolute top-4 left-4">
         <Button variant="ghost" size="sm" className="text-muted-foreground">
           <RiArrowLeftLine className="size-4 mr-2 mt-0.5" />
