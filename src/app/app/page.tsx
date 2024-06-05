@@ -2,23 +2,37 @@
 
 import SRSDashboard from "./_components/srs-dashboard";
 import SRSOnboarding from "./_components/srs-onboarding";
-import { useState } from "react";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+const useOnboardingStore = create<{
+  onboardingStage: "onboarding" | "onboarded";
+  setOnboardingStage: (stage: "onboarding" | "onboarded") => void;
+}>()(
+  persist(
+    (set) => ({
+      onboardingStage: "onboarding",
+      setOnboardingStage: (stage) => set({ onboardingStage: stage }),
+    }),
+    {
+      name: "onboarding",
+    },
+  ),
+);
 
 export default function Page() {
-  const [userStage, setUserStage] = useState(
-    "onboarding" as "onboarding" | "onboarded",
-  );
+  const { onboardingStage, setOnboardingStage } = useOnboardingStore();
 
   const handleOnboardingFinished = () => {
-    setUserStage("onboarded");
+    setOnboardingStage("onboarded");
   };
 
   return (
     <div className="h-full py-8">
-      {userStage === "onboarding" && (
+      {onboardingStage === "onboarding" && (
         <SRSOnboarding onOnboardingFinished={handleOnboardingFinished} />
       )}
-      {userStage === "onboarded" && <SRSDashboard />}
+      {onboardingStage === "onboarded" && <SRSDashboard />}
     </div>
   );
 }
