@@ -67,7 +67,7 @@ function OnboardPage2() {
           </span>
         </li>
         <li className="mt-2 text-muted-foreground">
-          You won't be able to sync your progress on other devices. If you want
+          You won&apos;t be able to sync your progress on other devices. If you want
           a better, more customized experience, you can use the{" "}
           <ExternalLink href="https://github.com/egegungordu/30-day-kanji/releases">
             30 day anki deck

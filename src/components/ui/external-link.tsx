@@ -18,5 +18,7 @@ const ExternalLink = React.forwardRef<
   </a>
 ))
 
+ExternalLink.displayName = "ExternalLink"
+
 export default ExternalLink
 
