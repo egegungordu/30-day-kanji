@@ -53,8 +53,8 @@ export default function ThemeSwitcher() {
 
   return mounted ? (
     <Select onValueChange={setTheme} defaultValue={theme} value={theme}>
-      <SelectTrigger showChevron={false} className="w-[30px] h-7 text-xs px-1.5 rounded-full text-muted-foreground hover:bg-muted">
-        <RiPaletteLine className="size-4" />
+      <SelectTrigger showChevron={false} className="size-9 flex items-center justify-center text-xs px-0 rounded-full text-muted-foreground hover:bg-muted animate-in fade-in-0 zoom-in-125 ease-in-out">
+        <RiPaletteLine className="size-5" />
       </SelectTrigger>
       <SelectContent align="center">
         <SelectGroup>
@@ -79,5 +79,5 @@ export default function ThemeSwitcher() {
         </SelectGroup>
       </SelectContent>
     </Select>
-  ) : <div className="h-7 w-[130px] rounded-full bg-background" />;
+  ) : <div className="size-9" />;
 }
