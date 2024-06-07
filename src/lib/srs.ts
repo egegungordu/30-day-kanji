@@ -127,6 +127,8 @@ const useSRSMetaStore = create<SRSMetaState>()(() => ({
   error: undefined,
 }));
 
+// TODO: FIX: this approach is too bug prone, surely will cause issues later on
+// consider seperating the fetch (react query) ?
 const useSRSStore = create<SRSState>()(
   devtools(
     persist(
@@ -180,7 +182,7 @@ const useSRSStore = create<SRSState>()(
             if (existingCard) {
               return {
                 ...existingCard,
-                kkanji: card.kanji,
+                kanji: card.kanji,
                 reading: card.reading,
                 targetKanji: card.targetKanji,
                 sentence: card.sentence,
@@ -272,10 +274,11 @@ const useSRSStore = create<SRSState>()(
                 const state = useSRSStore.getState();
                 state.hydrateCards(kanjiCards);
                 state.reschedule();
+                const updatedState = useSRSStore.getState();
                 useSRSMetaStore.setState({ loadState: "loaded" });
-                const queue = state.schedule.new
-                  .concat(state.schedule.learning)
-                  .concat(state.schedule.review);
+                const queue = updatedState.schedule.new
+                  .concat(updatedState.schedule.learning)
+                  .concat(updatedState.schedule.review);
                 const nextCardId = queue[0];
                 useSRSStore.setState({ currentCardId: nextCardId });
               };
@@ -290,15 +293,15 @@ const useSRSStore = create<SRSState>()(
 );
 
 async function getKanjiCards() {
-  console.warn("CALLING BACKEND");
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  return Array.from({ length: 2200 }, (_, i) => ({
-    id: i.toString(),
-    reading: "けいこう",
-    kanji: "傾向",
-    targetKanji: "向",
-    sentence: "若者にはお金を無駄に使う傾向がある。",
-  }));
+  return fetch("/api/srs").then((res) => res.json() as Promise<CardFace[]>);
+  /* await new Promise((resolve) => setTimeout(resolve, 100)); */
+  /* return Array.from({ length: 2200 }, (_, i) => ({ */
+  /*   id: i.toString(), */
+  /*   reading: "けいこう", */
+  /*   kanji: "傾向", */
+  /*   targetKanji: "向", */
+  /*   sentence: "若者にはお金を無駄に使う傾向がある。", */
+  /* })); */
 }
 
 export function useSRS() {
