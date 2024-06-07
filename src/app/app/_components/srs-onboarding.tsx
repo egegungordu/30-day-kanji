@@ -8,6 +8,7 @@ import {
 } from "react-icons/ri";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import ExternalLink from "@/components/ui/external-link";
 
 function OnboardPage1() {
   return (
@@ -22,7 +23,7 @@ function OnboardPage1() {
       <p className="bg-accent/50 text-accent-foreground/80 px-5 py-3 rounded-xl text-sm mt-6">
         <RiErrorWarningLine className="mr-2 inline-block" />
         <span className="font-bold">IMPORTANT:</span> Intended for people who
-        already can read japanese, but struggle with writing.
+        can already understand and read japanese, but struggle with writing.
       </p>
       <ul className="list-disc list-inside space-y-3 text-sm">
         <li className="mt-6 text-muted-foreground">
@@ -36,7 +37,7 @@ function OnboardPage1() {
           method.
         </li>
         <li className="mt-2  text-muted-foreground">
-          To get through all the kanji, you will need to see{" "}
+          To finish the challenge, you will need to see{" "}
           <span className="font-bold text-primary">72 new kanji</span> a day.
         </li>
       </ul>
@@ -53,37 +54,26 @@ function OnboardPage2() {
       <ul className="list-disc list-inside space-y-3 text-sm">
         <li className="mt-6 text-muted-foreground">
           This challenge is done in 30 days, but you will have to keep doing the
-          cards to retain your knowledge. That is how SRS works.
+          cards to retain your knowledge.{" "}
+          <ExternalLink href="https://ncase.me/remember/">
+            That is how SRS works.
+          </ExternalLink>
         </li>
         <li className="mt-2 text-muted-foreground">
           All progress you have is stored in your browser, if you delete your
           browser data,{" "}
-          <span className="text-foreground/90">
+          <span className="text-foreground font-semibold">
             you will lose all your progress.
           </span>
         </li>
         <li className="mt-2 text-muted-foreground">
           You won't be able to sync your progress on other devices. If you want
           a better, more customized experience, you can use the{" "}
-          <a
-            href="https://github.com/egegungordu/30-day-kanji/releases"
-            rel="noreferrer"
-            target="_blank"
-            className="text-primary underline hover:opacity-80"
-          >
+          <ExternalLink href="https://github.com/egegungordu/30-day-kanji/releases">
             30 day anki deck
-            <RiExternalLinkLine className="inline-block align-text-bottom ml-1" />
-          </a>{" "}
+          </ExternalLink>{" "}
           with{" "}
-          <a
-            href="https://ankiweb.net"
-            rel="noreferrer"
-            target="_blank"
-            className="text-primary underline hover:opacity-80"
-          >
-            Anki{" "}
-            <RiExternalLinkLine className="inline-block align-text-bottom ml-1" />
-          </a>
+          <ExternalLink href="https://ankiweb.net">Anki</ExternalLink>
         </li>
       </ul>
     </div>
@@ -219,7 +209,7 @@ export default function SRSOnboarding({
   onOnboardingFinished: () => void;
 }) {
   return (
-    <div className="mx-auto max-w-screen-sm relative shadow-xl grid place-items-center h-full px-6 sm:px-12 g-gradient-to-tr rounded-2xl from-background via-popover to-background">
+    <div className="mx-auto max-w-screen-sm relative shadow-xl grid place-items-center h-full px-6 sm:px-12 bg-gradient-to-tr rounded-2xl from-background via-popover to-background">
       <Link href="/" className="absolute top-4 left-4">
         <Button variant="ghost" size="sm" className="text-muted-foreground">
           <RiArrowLeftLine className="size-4 mr-2 mt-0.5" />
